@@ -1,0 +1,38 @@
+<header class="bg-primary text-white">
+  <div class="container py-4 d-flex align-items-center justify-content-between">
+    <div>
+      <h1 class="h3 mb-0">Hello, {{ title() }}</h1>
+      <div class="small opacity-75">Gardening dashboard</div>
+    </div>
+  </div>
+</header>
+
+<main class="container my-4">
+  <div class="mb-4">
+    <label class="form-label fw-bold">Select Garden:</label>
+    <select class="form-select" [(ngModel)]="selectedGardenName" (change)="selectGarden(selectedGardenName()!)">
+      @for (garden of gardens(); track garden.name) {
+        <option [value]="garden.name">{{ garden.name }}</option>
+      }
+    </select>
+  </div>
+
+  <ul ngbNav #nav="ngbNav" class="nav nav-tabs" role="tablist">
+    <li [ngbNavItem]="1" class="nav-item">
+      <a ngbNavLink class="nav-link" (click)="go('/beds', 1)">Beds</a>
+      <ng-template ngbNavContent>
+        <router-outlet></router-outlet>
+      </ng-template>
+    </li>
+    <li [ngbNavItem]="2" class="nav-item">
+      <a ngbNavLink class="nav-link" (click)="go('/plants', 2)">Plants</a>
+      <ng-template ngbNavContent>
+        <!-- routed content will mount above -->
+      </ng-template>
+    </li>
+  </ul>
+
+  <div class="tab-content border p-3 bg-white">
+    <div [ngbNavOutlet]="nav"></div>
+  </div>
+</main>

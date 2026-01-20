@@ -1,0 +1,31 @@
+<div class="view">
+  <h2>Beds</h2>
+
+  @if (loading()) {
+    <div>Loading…</div>
+  }
+
+  @if (error) {
+    <div class="error">{{ error }}</div>
+  }
+
+  @if (!loading() && !error && beds.length > 0) {
+    <ul>
+      @for (bed of beds; track bed.name) {
+        <li>
+          <strong>{{ bed.name }}</strong>
+          <div class="meta">
+            size: {{ bed.size_m2 || '—' }} m²
+            @if (bed.soil_type) { — soil: {{ bed.soil_type }} }
+            @if (bed.location) { — location: {{ bed.location }} }
+            @if (bed.growings && bed.growings.length > 0) {
+              <span class="badge bg-success ms-2">{{ bed.growings.length }} plant(s)</span>
+            }
+          </div>
+        </li>
+      }
+    </ul>
+  } @else {
+    <p>No beds in this garden.</p>
+  }
+</div>

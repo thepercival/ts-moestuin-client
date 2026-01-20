@@ -1,0 +1,54 @@
+<div class="view">
+  <h2>Plants</h2>
+    @if (loading()) {
+      <div>Loading plants…</div>
+    }
+    
+    @if (error) {
+      <div class="error">{{ error }}</div>
+    }
+    
+    @if (!loading() && !error) {
+        <div class="row">
+          @for (plant of plants(); track plant.common_name) {
+            <div class="col-md-6 mb-3">
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">{{ plant.common_name || plant.scientific_name }}</h5>
+                  @if (plant.scientific_name) {
+                    <h6 class="card-subtitle mb-2 text-muted">{{ plant.scientific_name }}</h6>
+                  }
+                  <div class="plant-details">
+                    @if (plant.category) {
+                      <span class="badge bg-secondary me-1">{{ plant.category }}</span>
+                    }
+                    @if (plant.purpose) {
+                      <span class="badge bg-info me-1">{{ plant.purpose }}</span>
+                    }
+                    @if (plant.perennial) {
+                      <span class="badge bg-success me-1">{{ plant.perennial }}</span>
+                    }
+                  </div>
+                  @if (plant.height_cm || plant.width_cm) {
+                    <p class="mt-2 mb-1 small">
+                      <strong>Size:</strong>
+                      @if (plant.height_cm) { H: {{ plant.height_cm }}cm }
+                      @if (plant.width_cm) { W: {{ plant.width_cm }}cm }
+                    </p>
+                  }
+                  @if (plant.pitch) {
+                    <p class="mb-1 small"><strong>Light:</strong> {{ plant.pitch }}</p>
+                  }
+                  @if (plant.water) {
+                    <p class="mb-1 small"><strong>Water:</strong> {{ plant.water }}</p>
+                  }
+                  @if (plant.soil) {
+                    <p class="mb-1 small"><strong>Soil:</strong> {{ plant.soil }}</p>
+                  }
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+    }
+</div>

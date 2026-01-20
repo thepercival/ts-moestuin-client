@@ -1,0 +1,23 @@
+/* Load compiled Bootstrap CSS (avoids deprecated Sass @import resolution) */
+@import '../node_modules/bootstrap/scss/bootstrap';
+
+/* Gardening theme via CSS variables that Bootstrap uses */
+:root {
+	--bs-body-bg: #f7faf6;
+	--bs-body-color: #214122;
+	--bs-primary: #2b7a2b;
+	--bs-secondary: #7aa27a;
+	--bs-success: #2b7a2b;
+	--bs-info: #87c38f;
+	--bs-warning: #f0a500;
+	--bs-danger: #b33a3a;
+	--bs-light: #f5f7f5;
+	--bs-dark: #214122;
+}
+
+body {
+	background: var(--bs-body-bg);
+	color: var(--bs-body-color);
+	font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+}
+

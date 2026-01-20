@@ -1,0 +1,44 @@
+<div class="view">
+  <h2>Gardens</h2>
+  @if (loading()) {
+    <div>Loading gardens…</div>
+  }
+
+  @if (error) {
+    <div class="error">{{ error }}</div>
+  }
+
+  @if (!loading() && !error && gardens.length > 0) {
+    <div class="row">
+      @for (garden of gardens; track garden.name) {
+        <div class="col-md-6 mb-3">
+          <div class="card">
+            <div class="card-header">
+              <h5 class="mb-0">{{ garden.name }}</h5>
+            </div>
+            <div class="card-body">
+              @if (garden.beds && garden.beds.length > 0) {
+                <p class="mb-2"><strong>Beds:</strong> {{ garden.beds.length }}</p>
+                <ul class="list-group list-group-flush">
+                  @for (bed of garden.beds; track bed.name) {
+                    <li class="list-group-item px-0 py-1">
+                      <small>
+                        <strong>{{ bed.name }}</strong>
+                        @if (bed.size_m2) { ({{ bed.size_m2 }} m²) }
+                      </small>
+                    </li>
+                  }
+                </ul>
+              } @else {
+                <p class="text-muted mb-0">No beds</p>
+              }
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+  @if (!loading() && !error && gardens.length === 0) {
+    <p>No gardens found.</p>
+  }
+</div>
