@@ -1,0 +1,39 @@
+@if (inline) {
+  <!-- Inline display for plants list -->
+  <span>
+    @if (soil.texture) {
+      {{ soil.texture }}
+    }
+    @if (soil.drainage) {
+      @if (soil.texture) { , }
+      {{ soil.drainage }}
+    }
+    @if (soil.richness) {
+      @if (soil.texture || soil.drainage) { , }
+      {{ soil.richness }}
+    }
+    @if (soil.ph) {
+      @if (soil.texture || soil.drainage || soil.richness) { , }
+      {{ soil.ph }}
+    }
+  </span>
+} @else {
+  <!-- Structured display for bed view -->
+  <div>
+    @if (soil.texture) {
+      <div>{{ soil.texture }}</div>
+    }
+    @if (soil.drainage) {
+      <div>{{ soil.drainage }}</div>
+    }
+    @if (soil.richness) {
+      <div>{{ soil.richness }}</div>
+    }
+    @if (soil.ph) {
+      <div>{{ soil.ph }}</div>
+    }
+    @if (soil.notes) {
+      <div>{{ soil.notes }}</div>
+    }
+  </div>
+}

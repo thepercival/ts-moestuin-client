@@ -1,0 +1,80 @@
+<div class="card mb-2">
+  <div class="card-header">
+    <h6 class="mb-0">{{ bed.name }}</h6>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-5">
+        @if (bed.height_cm) {
+          <div class="mb-2"><strong>Hoogte:</strong></div>
+        }
+        @if (bed.width_cm) {
+          <div class="mb-2"><strong>Breedte:</strong></div>
+        }
+        @if (bed.soil) {
+          <div class="mb-2">
+            <strong>Soil:</strong>
+            <div class="ms-3">
+              @if (bed.soil.texture) {
+                <div><em>Texture:</em></div>
+              }
+              @if (bed.soil.drainage) {
+                <div><em>Drainage:</em></div>
+              }
+              @if (bed.soil.richness) {
+                <div><em>Richness:</em></div>
+              }
+              @if (bed.soil.ph) {
+                <div><em>pH:</em></div>
+              }
+              @if (bed.soil.notes) {
+                <div><em>Notes:</em></div>
+              }
+            </div>
+          </div>
+        }
+        @if (bed.mulched !== undefined) {
+          <div class="mb-2"><strong>Mulched:</strong></div>
+        }
+      </div>
+      
+      <div class="col-7">
+        @if (bed.height_cm) {
+          <div class="mb-2">{{ bed.height_cm }} cm</div>
+        }
+        @if (bed.width_cm) {
+          <div class="mb-2">{{ bed.width_cm }} cm</div>
+        }
+        @if (bed.soil) {
+          <div class="mb-2">
+            <div>&nbsp;</div>
+            <app-soil [soil]="bed.soil"></app-soil>
+          </div>
+        }
+        @if (bed.mulched !== undefined) {
+          <div class="mb-2">{{ bed.mulched ? 'Yes' : 'No' }}</div>
+        }
+      </div>
+    </div>
+    
+    @if (bed.growings && bed.growings.length > 0) {
+      <hr class="my-3">
+      <p class="mb-2"><strong>Growings:</strong></p>
+      <ul class="list-group list-group-flush">
+        @for (growing of bed.growings; track $index) {
+          <li class="list-group-item px-0 py-2">
+            @if (growing.plant_id) {
+              <div><strong>{{ growing.plant_id }}</strong></div>
+            }
+            @if (growing.planted_on) {
+              <small class="text-muted d-block">Planted on: {{ growing.planted_on | date }}</small>
+            }
+          </li>
+        }
+      </ul>
+    } @else {
+      <hr class="my-3">
+      <p class="text-muted mb-0">No growings</p>
+    }
+  </div>
+</div>

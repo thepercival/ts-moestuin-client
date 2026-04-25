@@ -1,0 +1,100 @@
+<div class="view">
+  <h2>Planning</h2>
+
+  @if (loading()) {
+    <div>Loading...</div>
+  }
+
+  @if (error()) {
+    <div class="alert alert-danger">{{ error() }}</div>
+  }
+
+  @if (!loading() && !error()) {
+    <form>
+      <div class="row mb-3 align-items-center">
+        <label for="gardenSelect" class="col-auto form-label mb-0">Tuin:</label>
+        <div class="col-auto">
+          <select 
+            id="gardenSelect"
+            class="form-select" 
+            [(ngModel)]="selectedGardenName"
+            name="garden"
+            (change)="onGardenChange()">
+            <option value="">-- Selecteer een tuin --</option>
+            @for (garden of gardens(); track garden.name) {
+              <option [value]="garden.name">{{ garden.name }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      @if (selectedGardenName()) {
+        <div class="row mb-3 align-items-center">
+          <label for="bedSelect" class="col-auto form-label mb-0">Bed:</label>
+          <div class="col-auto">
+            <select 
+              id="bedSelect"
+              class="form-select" 
+              [(ngModel)]="selectedBedName"
+              name="bed">
+              <option value="">-- Selecteer een bed --</option>
+              @for (bed of beds(); track bed.name) {
+                <option [value]="bed.name">{{ bed.name }}</option>
+              }
+            </select>
+          </div>
+        </div>
+      }
+
+      @if (selectedGardenName() && selectedBedName()) {
+        @if (loadingPlants()) {
+          <div class="mt-3">Loading plants...</div>
+        } @else if (plantsWithActivities().length > 0) {
+          <div class="planning-table-wrap mt-3">
+            <table class="planning-activities-table">
+              <thead>
+                <tr>
+                  <th class="planning-plant-head">Plant</th>
+                  @for (month of months; track month) {
+                    <th scope="col" class="planning-month-head">
+                      <span class="planning-month-head-label">{{ month }}</span>
+                    </th>
+                  }
+                </tr>
+              </thead>
+              <tbody>
+                @for (plantData of plantsWithActivities(); track plantData.plantId) {
+                  <tr>
+                    <td class="planning-plant-label">
+                      <strong>{{ plantData.plant?.common_name || plantData.plantId }}</strong>
+                      @if (plantData.plant?.scientific_name) {
+                        <br><small class="text-muted">{{ plantData.plant?.scientific_name }}</small>
+                      }
+                    </td>
+                    @for (month of months; track month) {
+                      <td class="planning-activity-cell">
+                        @if (plantData.activitiesByMonth.has(month)) {
+                          <div class="d-flex flex-column gap-1">
+                            @for (activity of plantData.activitiesByMonth.get(month); track activity) {
+                              <span
+                                [class]="activityClass(activity)"
+                                [title]="activityTooltip(activity)">
+                                {{ activityLabel(activity) }}
+                              </span>
+                            }
+                          </div>
+                        }
+                      </td>
+                    }
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <div class="alert alert-info mt-3">No plants in this bed.</div>
+        }
+      }
+    </form>
+  }
+</div>

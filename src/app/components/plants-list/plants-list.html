@@ -1,16 +1,36 @@
 <div class="view">
   <h2>Plants</h2>
+    <div class="plants-toolbar">
+      <label class="plants-search" for="plants-search-input">
+        <span>Search plant name</span>
+        <input
+          id="plants-search-input"
+          type="search"
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event ?? '')"
+          placeholder="e.g. watermeloen"
+          autocomplete="off"
+        />
+      </label>
+      @if (!loading() && !error()) {
+        <p class="plants-count">{{ filteredPlants().length }} of {{ plants().length }} plants</p>
+      }
+    </div>
+
     @if (loading()) {
       <div>Loading plants…</div>
     }
     
-    @if (error) {
-      <div class="error">{{ error }}</div>
+    @if (error()) {
+      <div class="error">{{ error() }}</div>
     }
     
-    @if (!loading() && !error) {
-        <div class="row">
-          @for (plant of plants(); track plant.common_name) {
+    @if (!loading() && !error()) {
+        @if (filteredPlants().length === 0) {
+          <p class="meta">No plants match this search.</p>
+        }
+        <div class="row">          
+          @for (plant of filteredPlants(); track plant.common_name) {
             <div class="col-md-6 mb-3">
               <div class="card">
                 <div class="card-body">
@@ -43,7 +63,61 @@
                     <p class="mb-1 small"><strong>Water:</strong> {{ plant.water }}</p>
                   }
                   @if (plant.soil) {
-                    <p class="mb-1 small"><strong>Soil:</strong> {{ plant.soil }}</p>
+                    <p class="mb-1 small"><strong>Soil:</strong> <app-soil [soil]="plant.soil" [inline]="true"></app-soil></p>
+                  }
+                  <div class="mt-2 mb-1 small">
+                    <div class="d-flex align-items-center justify-content-between seed-header-row">
+                      <strong>Zaden :</strong>
+                      <button type="button" class="btn btn-sm btn-outline-primary seed-action-btn" (click)="openCreateSeedModal(plant)">+</button>
+                    </div>
+                    @if (seedEntriesForPlant(plant).length > 0) {
+                      @for (entry of seedEntriesForPlant(plant); track entry.seedIndex) {
+                        <div class="d-flex align-items-center justify-content-between seed-row">
+                          <span>- {{ seedDisplayName(entry.seed) }} (geldig t/m {{ entry.seed.valid_until_year }})</span>
+                          <button type="button" class="btn btn-sm btn-outline-danger seed-action-btn" (click)="removeSeed(entry.seedIndex)">x</button>
+                        </div>
+                      }
+                    } @else {
+                      <div class="text-muted">- geen zaden</div>
+                    }
+                  </div>
+                  @if (plant.preferred_activities && plant.preferred_activities.length > 0) {
+                    <div class="mt-3">
+                      <p class="mb-2 small"><strong>Preferred actions by month</strong></p>
+                      <div class="activities-table-wrap">
+                        <table class="activities-table" aria-label="Preferred actions by location and month">
+                          <thead>
+                            <tr>
+                              <th scope="col" class="location-head"></th>
+                              @for (month of months; track month) {
+                                <th scope="col" class="month-head">
+                                  <span class="month-head-label">{{ month }}</span>
+                                </th>
+                              }
+                            </tr>
+                          </thead>
+                          <tbody>
+                            @for (location of locations; track location) {
+                              <tr>
+                                <th scope="row" class="location-label">{{ location }}</th>
+                                @for (month of months; track month) {
+                                  @let cellActivities = preferredActivitiesForCell(plant, location, month);
+                                  <td [class.activities-cell--active]="cellActivities.length > 0" class="activities-cell">
+                                    <div class="month-actions">
+                                      @for (preferred of cellActivities; track $index) {
+                                        <span [class]="activityClass(preferred.activity_name)" [title]="activityTooltip(preferred.activity_name)">
+                                          {{ activityLabel(preferred.activity_name) }}
+                                        </span>
+                                      }
+                                    </div>
+                                  </td>
+                                }
+                              </tr>
+                            }
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
                   }
                 </div>
               </div>

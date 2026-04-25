@@ -46,6 +46,7 @@ export class App implements OnInit {
 
   go(path: string, id: number) {
     this.active = id;
+    console.log(path,id);
     this.router.navigate([path]);
   }
 }

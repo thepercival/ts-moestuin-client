@@ -1,0 +1,93 @@
+
+.planning-table-wrap {
+	overflow-x: auto;
+	padding-bottom: 0.2rem;
+}
+
+.planning-activities-table {
+	border-collapse: separate;
+	border-spacing: 0;
+	width: max-content;
+	min-width: 100%;
+	font-size: 0.72rem;
+}
+
+.planning-activities-table th,
+.planning-activities-table td {
+	border: 1px solid var(--activity-table-border);
+	background: var(--activity-table-surface);
+	padding: 0.2rem;
+	text-align: center;
+	vertical-align: middle;
+}
+
+.planning-plant-head,
+.planning-plant-label {
+	width: 104px;
+	min-width: 104px;
+	max-width: 104px;
+	text-align: left;
+	background: var(--activity-table-head);
+	white-space: normal;
+	word-break: break-word;
+}
+
+.planning-month-head {
+	width: 34px;
+	min-width: 34px;
+	height: 94px;
+	padding: 0;
+	background: var(--activity-table-head);
+}
+
+.planning-month-head-label {
+	display: inline-block;
+	writing-mode: vertical-rl;
+	text-orientation: mixed;
+	transform: rotate(180deg);
+	text-transform: uppercase;
+	font-size: 0.62rem;
+	letter-spacing: 0.04em;
+	color: #475569;
+	line-height: 1;
+}
+
+.planning-activity-cell {
+	min-width: 34px;
+	height: 32px;
+}
+
+.planning-activity-chip {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 1.1rem;
+	height: 1.1rem;
+	padding: 0 0.2rem;
+	border-radius: 999px;
+	font-size: 0.62rem;
+	font-weight: 700;
+	color: var(--activity-chip-default-fg);
+	background: var(--activity-chip-default-bg);
+}
+
+.planning-activity-chip--seeding {
+	background: var(--activity-chip-seeding-bg);
+	color: var(--activity-chip-seeding-fg);
+}
+
+.planning-activity-chip--planting {
+	background: var(--activity-chip-planting-bg);
+	color: var(--activity-chip-planting-fg);
+}
+
+.planning-activity-chip--reaping {
+	background: var(--activity-chip-reaping-bg);
+	color: var(--activity-chip-reaping-fg);
+}
+
+.planning-activity-chip--pruning {
+	background: var(--activity-chip-pruning-bg);
+	color: var(--activity-chip-pruning-fg);
+}
+

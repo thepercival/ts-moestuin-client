@@ -1,5 +1,6 @@
 /* Load compiled Bootstrap CSS (avoids deprecated Sass @import resolution) */
 @import '../node_modules/bootstrap/scss/bootstrap';
+@import '../node_modules/@fortawesome/fontawesome-free/css/all.min.css';
 
 /* Gardening theme via CSS variables that Bootstrap uses */
 :root {
@@ -13,6 +14,23 @@
 	--bs-danger: #b33a3a;
 	--bs-light: #f5f7f5;
 	--bs-dark: #214122;
+
+	/* Shared activity-table palette */
+	--activity-table-border: #d1d5db;
+	--activity-table-surface: #f8fafc;
+	--activity-table-head: #eef2f7;
+	--activity-table-active-surface: #f1f5f9;
+	--activity-table-active-border: #94a3b8;
+	--activity-chip-default-bg: #e5e7eb;
+	--activity-chip-default-fg: #1f2937;
+	--activity-chip-seeding-bg: #fef3c7;
+	--activity-chip-seeding-fg: #92400e;
+	--activity-chip-planting-bg: #dcfce7;
+	--activity-chip-planting-fg: #166534;
+	--activity-chip-reaping-bg: #166534;
+	--activity-chip-reaping-fg: #dcfce7;
+	--activity-chip-pruning-bg: #f3e2cf;
+	--activity-chip-pruning-fg: #7c4a1f;
 }
 
 body {

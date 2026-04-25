@@ -1,0 +1,600 @@
+<div class="view">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Garden</h2>
+    <a class="btn btn-outline-secondary btn-sm" [routerLink]="['/gardens']">Back</a>
+  </div>
+
+  @if (loading()) {
+    <div>Loading garden…</div>
+  }
+
+  @if (error()) {
+    <div class="error">{{ error() }}</div>
+  }
+
+  @if (!loading() && !error() && garden()) {
+    <div class="card mb-3">
+      <div class="card-header details-header" (click)="toggleDetailsCollapse()">
+        <div class="d-flex justify-content-between align-items-center">
+          <h4 class="mb-0">{{ garden()!.name }}</h4>
+          <i class="bi" [ngClass]="isDetailsCollapsed() ? 'bi-chevron-down' : 'bi-chevron-up'"></i>
+        </div>
+      </div>
+      @if (!isDetailsCollapsed()) {
+        <div class="card-body">
+          <div class="details-grid">
+            <div class="label">Location</div>
+            <div class="value">{{ garden()!.location || '—' }}</div>
+            <div class="label">Humidity</div>
+            <div class="value">
+              @if (garden()!.humidity?.min_pct !== undefined && garden()!.humidity?.max_pct !== undefined) {
+                {{ garden()!.humidity!.min_pct }}% – {{ garden()!.humidity!.max_pct }}%
+              } @else if (garden()!.humidity?.min_pct !== undefined) {
+                Min {{ garden()!.humidity!.min_pct }}%
+              } @else if (garden()!.humidity?.max_pct !== undefined) {
+                Max {{ garden()!.humidity!.max_pct }}%
+              } @else {
+                —
+              }
+            </div>
+            <div class="label">Temperature</div>
+            <div class="value">
+              @if (garden()!.temperature_range_c?.min !== undefined && garden()!.temperature_range_c?.max !== undefined) {
+                {{ garden()!.temperature_range_c!.min }}°C – {{ garden()!.temperature_range_c!.max }}°C
+              } @else if (garden()!.temperature_range_c?.min !== undefined) {
+                Min {{ garden()!.temperature_range_c!.min }}°C
+              } @else if (garden()!.temperature_range_c?.max !== undefined) {
+                Max {{ garden()!.temperature_range_c!.max }}°C
+              } @else {
+                —
+              }
+            </div>
+            <div class="label">Size</div>
+            <div class="value">
+              @if (garden()!.width_cm && garden()!.width_cm) {
+                {{ garden()!.width_cm }}cm × {{ garden()!.width_cm }}cm
+              } @else {
+                —
+              }
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+
+    <div class="card map-card">
+      <div class="card-header p-2">
+        <nav class="navbar navbar-expand part-toolbar p-0">
+          <div class="container-fluid px-2 py-1 gap-2">
+            @for (item of partPalette; track item.type) {
+              <button
+                type="button"
+                class="btn btn-outline-secondary btn-sm part-type-btn"
+                [ngStyle]="getPartTypeButtonStyle(item.type)"
+                draggable="true"
+                (dragstart)="onDragPartType($event, item.type)"
+                (click)="openPartTypeModal(item.type, { bedModal, pathModal, embankmentModal, waterTankModal, shedModal, greenhouseModal })">
+                <i [class]="item.icon"></i>
+                <span>{{ item.label }}</span>
+              </button>
+            }
+            <div class="path-legend ms-auto">
+              <span class="path-legend-item">
+                <span class="path-legend-swatch path-legend-swatch--growing"></span>
+                <span>beplanting</span>
+              </span>
+              <span class="path-legend-item">
+                <span class="path-legend-swatch path-legend-swatch--beton"></span>
+                <span>beton</span>
+              </span>
+              <span class="path-legend-item">
+                <span class="path-legend-swatch path-legend-swatch--houtsnippers"></span>
+                <span>houtsnippers</span>
+              </span>
+            </div>
+          </div>
+        </nav>
+      </div>
+      <div class="card-body p-0">
+        @if (garden()!.height_cm && garden()!.width_cm) {
+          <div
+            class="map-wrapper"
+            (dragover)="onCanvasDragOver($event)"
+            (drop)="onCanvasDrop($event, bedModal, pathModal, embankmentModal, waterTankModal, shedModal, greenhouseModal)">
+            <svg
+              #mapSvg
+              class="map"
+              [attr.viewBox]="viewBox()"
+              preserveAspectRatio="xMinYMin meet"
+              (mousemove)="onMapPointerMove($event)"
+              (mouseup)="onMapPointerUp()">
+              <defs>
+                <pattern id="map-grid-50cm" patternUnits="userSpaceOnUse" width="50" height="50">
+                  <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#d3d3d3" stroke-width="0.8" />
+                </pattern>
+              </defs>
+              <rect x="0" y="0" [attr.width]="garden()!.width_cm" [attr.height]="garden()!.height_cm" fill="url(#map-grid-50cm)" />
+              <rect class="garden-outline" x="0" y="0" [attr.width]="garden()!.width_cm" [attr.height]="garden()!.height_cm" />
+              @for (rect of footprints(); track rect.id) {
+                <g>
+                  <rect
+                    [attr.class]="getGrowingRectClass(rect)"
+                    [ngStyle]="getPartRectStyle(rect)"
+                    [attr.x]="rect.x"
+                    [attr.y]="rect.y"
+                    [attr.width]="rect.width"
+                    [attr.height]="rect.height"
+                    (mousedown)="onPartDragStart($event, rect)"
+                    (click)="onMapRectClick(rect, { bedModal, pathModal, embankmentModal, waterTankModal, shedModal, greenhouseModal }, createGrowingModal)"
+                  >
+                    @if (rect.warningText) {
+                      <title>{{ rect.warningText }}</title>
+                    }
+                  </rect>
+                  @if (isDraggableRect(rect)) {
+                    <rect
+                      class="resize-handle resize-handle--nw"
+                      [attr.x]="rect.x"
+                      [attr.y]="rect.y"
+                      [attr.width]="resizeHandleSize"
+                      [attr.height]="resizeHandleSize"
+                      [style.fill]="getResizeHandleColor(rect, 'nw')"
+                      [style.stroke]="getResizeHandleColor(rect, 'nw')"
+                      (mousedown)="onPartResizeStart($event, getResizeTarget(rect, 'nw'), 'nw')"
+                    ></rect>
+                    <rect
+                      class="resize-handle resize-handle--ne"
+                      [attr.x]="rect.x + rect.width - resizeHandleSize"
+                      [attr.y]="rect.y"
+                      [attr.width]="resizeHandleSize"
+                      [attr.height]="resizeHandleSize"
+                      [style.fill]="getResizeHandleColor(rect, 'ne')"
+                      [style.stroke]="getResizeHandleColor(rect, 'ne')"
+                      (mousedown)="onPartResizeStart($event, getResizeTarget(rect, 'ne'), 'ne')"
+                    ></rect>
+                    <rect
+                      class="resize-handle resize-handle--sw"
+                      [attr.x]="rect.x"
+                      [attr.y]="rect.y + rect.height - resizeHandleSize"
+                      [attr.width]="resizeHandleSize"
+                      [attr.height]="resizeHandleSize"
+                      [style.fill]="getResizeHandleColor(rect, 'sw')"
+                      [style.stroke]="getResizeHandleColor(rect, 'sw')"
+                      (mousedown)="onPartResizeStart($event, getResizeTarget(rect, 'sw'), 'sw')"
+                    ></rect>
+                    <rect
+                      class="resize-handle resize-handle--se"
+                      [attr.x]="rect.x + rect.width - resizeHandleSize"
+                      [attr.y]="rect.y + rect.height - resizeHandleSize"
+                      [attr.width]="resizeHandleSize"
+                      [attr.height]="resizeHandleSize"
+                      [style.fill]="getResizeHandleColor(rect, 'se')"
+                      [style.stroke]="getResizeHandleColor(rect, 'se')"
+                      (mousedown)="onPartResizeStart($event, getResizeTarget(rect, 'se'), 'se')"
+                    ></rect>
+                  }
+                  @if (rect.type === 'path' && rect.label) {
+                    <text
+                      class="path-label"
+                      [attr.x]="rect.x + (rect.width / 2)"
+                      [attr.y]="rect.y + (rect.height / 2)"
+                      [attr.transform]="getPathLabelTransform(rect)">
+                      {{ rect.label }}
+                    </text>
+                  }
+                  @if (rect.type === 'water_tank' && rect.label) {
+                    <text
+                      class="part-label part-label--water-tank"
+                      [attr.x]="rect.x + (rect.width / 2)"
+                      [attr.y]="rect.y + (rect.height / 2)">
+                      {{ rect.label }}
+                    </text>
+                  }
+                  @if (rect.type === 'greenhouse' && rect.label) {
+                    <text
+                      class="part-label part-label--greenhouse"
+                      [attr.x]="rect.x + (rect.width / 2)"
+                      [attr.y]="rect.y + (rect.height / 2)">
+                      {{ rect.label }}
+                    </text>
+                  }
+                  @if (rect.type === 'growing' && rect.label) {
+                    @let lines = getGrowingLabelLines(rect);
+                    <text
+                      class="growing-label"
+                      [attr.x]="rect.x + (rect.width / 2)"
+                      [attr.y]="getGrowingLabelStartY(rect, lines.length)">
+                      @for (line of lines; track $index) {
+                        <tspan
+                          [attr.x]="rect.x + (rect.width / 2)"
+                          [attr.dy]="$index === 0 ? 0 : growingLabelLineHeight">
+                          {{ line }}
+                        </tspan>
+                      }
+                    </text>
+                  }
+                  @if (rect.type === 'growing' && rect.warningText) {
+                    <text
+                      [attr.class]="getGrowingWarningIconClass(rect)"
+                      [attr.x]="rect.x + rect.width / 2"
+                      [attr.y]="rect.y + rect.height - 5"
+                      [attr.title]="rect.warningText">
+                      &#128276;
+                    </text>
+                  }
+                </g>
+              }
+              @for (cell of emptyBedCells(); track cell.id) {
+                <g class="empty-bed-cell-group" (mousedown)="onEmptyCellMouseDown($event, cell)">
+                  <rect
+                    class="empty-bed-cell"
+                    [attr.x]="cell.x"
+                    [attr.y]="cell.y"
+                    [attr.width]="cell.width"
+                    [attr.height]="cell.height"
+                    [style.cursor]="getEmptyCellCursor(cell)"
+                    (click)="openCreateGrowingModal(cell, createGrowingModal)"
+                  ></rect>
+                  <text
+                    class="empty-bed-cell-plus"
+                    [attr.x]="cell.x + (cell.width / 2)"
+                    [attr.y]="cell.y + (cell.height / 2)"
+                    style="cursor: pointer"
+                    (click)="openCreateGrowingModal(cell, createGrowingModal)">
+                    +
+                  </text>
+                </g>
+              }
+            </svg>
+          </div>
+        } @else {
+          <p class="text-muted m-3 mb-0">No footprint dimensions available.</p>
+        }
+      </div>
+    </div>
+
+    <ng-template #createGrowingModal let-modal>
+      <div class="modal-header">
+        <h5 class="modal-title">{{ getGrowingModalTitle() }}</h5>
+        <div class="ms-auto d-flex align-items-center gap-2">
+          @if (!isEditingGrowing()) {
+            <button type="button" class="btn btn-sm btn-outline-secondary" (click)="navigateToBed(modal)" title="Bed bewerken">Naar bed</button>
+          }
+          <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+        </div>
+      </div>
+      <form class="modal-body" (ngSubmit)="saveGrowing(modal)">
+        @if (growingModalError()) {
+          <div class="alert alert-danger mb-3">{{ growingModalError() }}</div>
+        }
+        <div class="row g-2">
+          <div class="col-12">
+            <label class="form-label">Plant</label>
+            <div class="d-flex align-items-end">
+              <select class="form-select" name="growing_plant_id" [(ngModel)]="growingForm.plant_id" (ngModelChange)="onGrowingPlantChange()" required>
+                <option value="" disabled>Selecteer een plant</option>
+                @for (plantId of plantIds(); track plantId) {
+                  <option [value]="plantId">{{ plantId }}</option>
+                }
+              </select>
+              <a class="btn btn-outline-primary ms-2" [routerLink]="['/plants']" (click)="modal.close()">Nieuwe plant</a>
+            </div>
+          </div>
+          <div class="col-12">
+            <label class="form-label">Jaar</label>
+            <input type="number" class="form-control" name="growing_year" [(ngModel)]="growingForm.year" min="2000" max="2100" required />
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Start met ..</label>
+            <select class="form-select" name="growing_source_type" [(ngModel)]="growingForm.source_type">
+              <option value="none">geen</option>
+              <option value="source_growing">binnenteelt</option>
+              <option value="seed">zaad</option>
+            </select>
+          </div>
+
+          @if (growingForm.source_type === 'source_growing') {
+            <div class="col-md-6">
+              <label class="form-label">Tuin</label>
+              <select class="form-select" name="growing_source_garden" [(ngModel)]="growingForm.source_garden_name" (ngModelChange)="onSourceGrowingGardenChange()" required>
+                <option value="" disabled>Selecteer tuin</option>
+                @for (gardenName of sourceGrowingGardenOptions(); track gardenName) {
+                  <option [value]="gardenName">{{ gardenName }}</option>
+                }
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Bed</label>
+              <select class="form-select" name="growing_source_bed" [(ngModel)]="growingForm.source_bed_name" required>
+                <option value="" disabled>Selecteer bed</option>
+                @for (bedName of sourceGrowingBedOptions(); track bedName) {
+                  <option [value]="bedName">{{ bedName }}</option>
+                }
+              </select>
+            </div>
+          }
+
+          @if (growingForm.source_type === 'seed') {
+            <div class="col-12">
+              <label class="form-label">Zaad</label>
+              <div class="d-flex align-items-end gap-2">
+                <select class="form-select" name="growing_seed_selection" [(ngModel)]="growingForm.seed_selection_key" required>
+                  <option value="" disabled>Selecteer zaad</option>
+                  @for (seed of seedOptionsForSelectedPlant(); track getSeedOptionKey(seed)) {
+                    <option [value]="getSeedOptionKey(seed)">{{ getSeedOptionLabel(seed) }}</option>
+                  }
+                </select>
+                <button type="button" class="btn btn-outline-primary" (click)="openNewSeedModal()" title="Nieuw zaad toevoegen">+</button>
+              </div>
+            </div>
+          }
+
+          <div class="col-12 mt-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <label class="form-label mb-0">Activiteiten</label>
+              <button type="button" class="btn btn-sm btn-outline-primary" (click)="addGrowingActivity()">Activiteit toevoegen</button>
+            </div>
+
+            @if (growingForm.activities.length === 0) {
+              <p class="small text-muted mb-0">Geen activiteiten opgegeven.</p>
+            } @else {
+              <ul class="list-group list-group-flush">
+                @for (activity of growingForm.activities; track $index) {
+                  <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-1">
+                    <span class="small">{{ activity.date }} &mdash; {{ translateActivityName(activity.name) }}</span>
+                    <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeGrowingActivity($index)" title="Verwijderen">&times;</button>
+                  </li>
+                }
+              </ul>
+            }
+          </div>
+
+          @if (growingTarget()?.warningText) {
+            <div class="col-12 mt-2 mb-2">
+              <div class="alert alert-warning mb-0">
+                @if (growingTarget()?.warningSourceGardenName) {
+                  <button
+                    type="button"
+                    class="btn btn-link alert-link p-0 text-start w-100"
+                    (click)="openSourceGardenFromWarning(modal, $event)">
+                    {{ growingTarget()!.warningText }}
+                  </button>
+                } @else {
+                  {{ growingTarget()!.warningText }}
+                }
+              </div>
+            </div>
+          }
+
+          <div class="col-12 mt-3">
+            <p class="mb-1 small"><strong>Voorkeursmomenten</strong></p>
+            <div class="growing-actions-table-wrap">
+              <table class="growing-actions-table" aria-label="Seeding and planting by location and month">
+                <thead>
+                  <tr>
+                    <th scope="col" class="growing-location-head"></th>
+                    @for (month of months; track month) {
+                      <th scope="col" class="growing-month-head">
+                        <span class="growing-month-head-label">{{ month }}</span>
+                      </th>
+                    }
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (location of locations; track location) {
+                    <tr>
+                      <th scope="row" class="growing-location-label">{{ location }}</th>
+                      @for (month of months; track month) {
+                        @let labels = growingStartPreferredActivitiesForCell(location, month);
+                        <td [class.growing-actions-cell--active]="labels.length > 0" class="growing-actions-cell">
+                          <div class="growing-actions-cell-content">
+                            @for (activity of labels; track $index) {
+                              <span [class]="growingStartActivityClass(activity)" [title]="growingStartActivityTooltip(activity)">{{ growingStartActivityLabel(activity) }}</span>
+                            }
+                          </div>
+                        </td>
+                      }
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer px-0 pb-0 mt-2">
+          @if (isEditingGrowing()) {
+            <button type="button" class="btn btn-outline-danger me-auto" (click)="deleteGrowing(modal)">Verwijderen</button>
+          }
+          <button type="submit" class="btn btn-primary">{{ getGrowingSubmitLabel() }}</button>
+        </div>
+      </form>
+    </ng-template>
+
+    <ng-template #activityModal let-modal>
+      <div class="modal-header">
+        <h5 class="modal-title">Activiteit toevoegen</h5>
+        <button type="button" class="btn-close" aria-label="Sluiten" (click)="modal.dismiss()"></button>
+      </div>
+      <form class="modal-body" (ngSubmit)="confirmAddActivity(modal)" #activityModalForm="ngForm">
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label">Datum</label>
+            <input type="date" class="form-control" name="activity_date" [(ngModel)]="activityForm.date" required />
+          </div>
+          <div class="col-12">
+            <label class="form-label">Activiteit</label>
+            <select class="form-select" name="activity_name" [(ngModel)]="activityForm.name" required>
+              @for (activityName of activityNames; track activityName) {
+                <option [value]="activityName">{{ translateActivityName(activityName) }}</option>
+              }
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer px-0 pb-0 mt-3">
+          <button type="button" class="btn btn-outline-secondary" (click)="modal.dismiss()">Annuleren</button>
+          <button type="submit" class="btn btn-primary" [disabled]="activityModalForm.invalid">Toevoegen</button>
+        </div>
+      </form>
+    </ng-template>
+
+    <ng-template #bedModal let-modal>
+      <div class="modal-header modal-bed">
+        <h5 class="modal-title">{{ getPartModalTitle('bed') }}</h5>
+        <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+      </div>
+      <form class="modal-body part-form bed-form" (ngSubmit)="createBed(modal)">
+        <div class="row g-2">
+          <div class="col-md-6"><label class="form-label">Naam</label><input class="form-control" name="bed_name" [(ngModel)]="bedForm.name" [disabled]="isEditingPartType('bed')" required /></div>
+          <div class="col-md-6">
+            <label class="form-label">Textuur</label>
+            <select class="form-select" name="bed_texture" [(ngModel)]="bedForm.texture" required>
+              @for (option of soilTextureOptions; track option) {
+                <option [value]="option">{{ option }}</option>
+              }
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Drainage</label>
+            <select class="form-select" name="bed_drainage" [(ngModel)]="bedForm.drainage" required>
+              @for (option of soilDrainageOptions; track option) {
+                <option [value]="option">{{ option }}</option>
+              }
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Voedingsrijkdom</label>
+            <select class="form-select" name="bed_richness" [(ngModel)]="bedForm.richness" required>
+              @for (option of soilRichnessOptions; track option) {
+                <option [value]="option">{{ option }}</option>
+              }
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">ph</label>
+            <select class="form-select" name="bed_ph" [(ngModel)]="bedForm.ph" required>
+              @for (option of soilPhOptions; track option) {
+                <option [value]="option">{{ option }}</option>
+              }
+            </select>
+          </div>
+          <div class="col-12"><label class="form-label">Bodemnotities</label><input class="form-control" name="bed_notes" [(ngModel)]="bedForm.notes" /></div>
+          <div class="col-12 form-check mt-2 ms-1"><input class="form-check-input" type="checkbox" id="bed_mulched" name="bed_mulched" [(ngModel)]="bedForm.mulched" /><label class="form-check-label" for="bed_mulched">Gemulcht</label></div>
+        </div>
+        <div class="modal-footer px-0 pb-0">
+          @if (isEditingPartType('bed')) {
+            <button type="button" class="btn btn-outline-danger me-auto" (click)="deleteEditingPart(modal, 'bed')">Verwijderen</button>
+          }
+          <button type="button" class="btn btn-outline-secondary" (click)="modal.dismiss()">Annuleren</button>
+          <button type="submit" class="btn btn-primary">{{ getPartSubmitLabel('bed') }}</button>
+        </div>
+      </form>
+    </ng-template>
+
+    <ng-template #pathModal let-modal>
+      <div class="modal-header modal-path">
+        <h5 class="modal-title">{{ getPartModalTitle('path') }}</h5>
+        <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+      </div>
+      <form class="modal-body part-form path-form" (ngSubmit)="createPath(modal)">
+        <div class="row g-2">
+          <div class="col-md-6"><label class="form-label">Naam</label><input class="form-control" name="path_name" [(ngModel)]="pathForm.name" [disabled]="isEditingPartType('path')" required /></div>
+          <div class="col-12"><label class="form-label">Padmateriaal</label><select class="form-select" name="path_matter" [(ngModel)]="pathForm.path_matter"><option value="houtsnippers">houtsnippers</option><option value="beton">beton</option></select></div>
+        </div>
+        <div class="modal-footer px-0 pb-0">
+          @if (isEditingPartType('path')) {
+            <button type="button" class="btn btn-outline-danger me-auto" (click)="deleteEditingPart(modal, 'path')">Verwijderen</button>
+          }
+          <button type="button" class="btn btn-outline-secondary" (click)="modal.dismiss()">Annuleren</button>
+          <button type="submit" class="btn btn-primary">{{ getPartSubmitLabel('path') }}</button>
+        </div>
+      </form>
+    </ng-template>
+
+    <ng-template #embankmentModal let-modal>
+      <div class="modal-header modal-embankment">
+        <h5 class="modal-title">{{ getPartModalTitle('embankment') }}</h5>
+        <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+      </div>
+      <form class="modal-body part-form embankment-form" (ngSubmit)="createEmbankment(modal)">
+        <div class="row g-2">
+          <div class="col-md-6"><label class="form-label">Naam</label><input class="form-control" name="embankment_name" [(ngModel)]="embankmentForm.name" [disabled]="isEditingPartType('embankment')" required /></div>
+          <div class="col-md-6"><label class="form-label">pitch_degrees</label><input type="number" class="form-control" name="embankment_pitch" [(ngModel)]="embankmentForm.pitch_degrees" required /></div>
+          <div class="col-md-6"><label class="form-label">Textuur</label><input class="form-control" name="embankment_texture" [(ngModel)]="embankmentForm.texture" required /></div>
+          <div class="col-md-6"><label class="form-label">Drainage</label><input class="form-control" name="embankment_drainage" [(ngModel)]="embankmentForm.drainage" required /></div>
+          <div class="col-md-6"><label class="form-label">Voedingsrijkdom</label><input class="form-control" name="embankment_richness" [(ngModel)]="embankmentForm.richness" required /></div>
+          <div class="col-md-6"><label class="form-label">ph</label><input class="form-control" name="embankment_ph" [(ngModel)]="embankmentForm.ph" required /></div>
+          <div class="col-md-6 form-check mt-4 ms-1"><input class="form-check-input" type="checkbox" id="embankment_mulched" name="embankment_mulched" [(ngModel)]="embankmentForm.mulched" /><label class="form-check-label" for="embankment_mulched">Gemulcht</label></div>
+          <div class="col-12"><label class="form-label">Bodemnotities</label><input class="form-control" name="embankment_notes" [(ngModel)]="embankmentForm.notes" /></div>
+        </div>
+        <div class="modal-footer px-0 pb-0">
+          @if (isEditingPartType('embankment')) {
+            <button type="button" class="btn btn-outline-danger me-auto" (click)="deleteEditingPart(modal, 'embankment')">Verwijderen</button>
+          }
+          <button type="button" class="btn btn-outline-secondary" (click)="modal.dismiss()">Annuleren</button>
+          <button type="submit" class="btn btn-primary">{{ getPartSubmitLabel('embankment') }}</button>
+        </div>
+      </form>
+    </ng-template>
+
+    <ng-template #waterTankModal let-modal>
+      <div class="modal-header modal-water-tank">
+        <h5 class="modal-title">{{ getPartModalTitle('water_tank') }}</h5>
+        <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+      </div>
+      <form class="modal-body part-form water-tank-form" (ngSubmit)="createWaterTank(modal)">
+        <div class="row g-2">
+          <div class="col-md-6"><label class="form-label">Naam</label><input class="form-control" name="tank_name" [(ngModel)]="waterTankForm.name" [disabled]="isEditingPartType('water_tank')" required /></div>
+          <div class="col-12"><label class="form-label">capacity_liters</label><input type="number" class="form-control" name="tank_capacity" [(ngModel)]="waterTankForm.capacity_liters" required /></div>
+        </div>
+        <div class="modal-footer px-0 pb-0">
+          @if (isEditingPartType('water_tank')) {
+            <button type="button" class="btn btn-outline-danger me-auto" (click)="deleteEditingPart(modal, 'water_tank')">Verwijderen</button>
+          }
+          <button type="button" class="btn btn-outline-secondary" (click)="modal.dismiss()">Annuleren</button>
+          <button type="submit" class="btn btn-primary">{{ getPartSubmitLabel('water_tank') }}</button>
+        </div>
+      </form>
+    </ng-template>
+
+    <ng-template #shedModal let-modal>
+      <div class="modal-header modal-shed">
+        <h5 class="modal-title">{{ getPartModalTitle('shed') }}</h5>
+        <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+      </div>
+      <form class="modal-body part-form shed-form" (ngSubmit)="createShed(modal)">
+        <div class="row g-2">
+          <div class="col-md-6"><label class="form-label">Naam</label><input class="form-control" name="shed_name" [(ngModel)]="shedForm.name" [disabled]="isEditingPartType('shed')" required /></div>
+          <div class="col-12 form-check mt-2 ms-1"><input class="form-check-input" type="checkbox" id="shed_workbench" name="shed_workbench" [(ngModel)]="shedForm.has_workbench" /><label class="form-check-label" for="shed_workbench">Heeft werkbank</label></div>
+        </div>
+        <div class="modal-footer px-0 pb-0">
+          @if (isEditingPartType('shed')) {
+            <button type="button" class="btn btn-outline-danger me-auto" (click)="deleteEditingPart(modal, 'shed')">Verwijderen</button>
+          }
+          <button type="button" class="btn btn-outline-secondary" (click)="modal.dismiss()">Annuleren</button>
+          <button type="submit" class="btn btn-primary">{{ getPartSubmitLabel('shed') }}</button>
+        </div>
+      </form>
+    </ng-template>
+
+    <ng-template #greenhouseModal let-modal>
+      <div class="modal-header modal-greenhouse">
+        <h5 class="modal-title">{{ getPartModalTitle('greenhouse') }}</h5>
+        <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+      </div>
+      <form class="modal-body part-form greenhouse-form" (ngSubmit)="createGreenhouse(modal)">
+        <div class="row g-2">
+          <div class="col-md-6"><label class="form-label">Naam</label><input class="form-control" name="greenhouse_name" [(ngModel)]="greenhouseForm.name" [disabled]="isEditingPartType('greenhouse')" required /></div>
+          <div class="col-md-6"><label class="form-label">Wall type</label><select class="form-select" name="greenhouse_wall_type" [(ngModel)]="greenhouseForm.wall_type"><option value="glas">glas</option><option value="polycarbonaat">polycarbonaat</option></select></div>
+        </div>
+        <div class="modal-footer px-0 pb-0">
+          @if (isEditingPartType('greenhouse')) {
+            <button type="button" class="btn btn-outline-danger me-auto" (click)="deleteEditingPart(modal, 'greenhouse')">Verwijderen</button>
+          }
+          <button type="button" class="btn btn-outline-secondary" (click)="modal.dismiss()">Annuleren</button>
+          <button type="submit" class="btn btn-primary">{{ getPartSubmitLabel('greenhouse') }}</button>
+        </div>
+      </form>
+    </ng-template>
+  }
+</div>
