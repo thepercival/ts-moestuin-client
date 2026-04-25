@@ -1,44 +1,92 @@
 <div class="view">
-  <h2>Gardens</h2>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Gardens</h2>
+    <button 
+      class="btn btn-outline-primary btn-sm" 
+      type="button"
+      (click)="toggleFilter()">
+      <i class="bi bi-filter"></i> Filter
+    </button>
+  </div>
+
+  @if (showFilter()) {
+    <div class="card mb-3">
+      <div class="card-body">
+        <form>
+          <div class="row">
+            <div class="col-auto">
+              <label class="form-label mb-1">Period</label>
+              <div class="d-flex gap-2 align-items-end">
+                <select 
+                  class="form-select form-select-sm" 
+                  name="startMonth"
+                  [(ngModel)]="filter.startMonth"
+                  style="width: 160px;">
+                  <option value="">startmaand</option>
+                  @for (month of months; track month) {
+                    <option [value]="month">{{ month }}</option>
+                  }
+                </select>
+                <select 
+                  class="form-select form-select-sm" 
+                  name="endMonth"
+                  [(ngModel)]="filter.endMonth"
+                  style="width: 160px;">
+                  <option value="">eindmaand</option>
+                  @for (month of months; track month) {
+                    <option [value]="month">{{ month }}</option>
+                  }
+                </select>
+                <button type="button" class="btn btn-secondary btn-sm" (click)="clearFilter()">
+                  Clear
+                </button>
+              </div>
+            </div>
+            <div class="col-auto">
+              <label class="form-label mt-3 mb-1">&nbsp;</label>
+              <button type="button" class="btn btn-primary btn-sm" (click)="applyFilter()">
+                Apply
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
   @if (loading()) {
     <div>Loading gardens…</div>
   }
 
-  @if (error) {
-    <div class="error">{{ error }}</div>
+  @if (error()) {
+    <div class="error">{{ error() }}</div>
   }
 
-  @if (!loading() && !error && gardens.length > 0) {
+  @if (!loading() && !error() && gardens().length > 0) {
     <div class="row">
-      @for (garden of gardens; track garden.name) {
+      @for (garden of gardens(); track garden.name) {
         <div class="col-md-6 mb-3">
-          <div class="card">
-            <div class="card-header">
-              <h5 class="mb-0">{{ garden.name }}</h5>
+          <a class="garden-card-link" [routerLink]="['/gardens', garden.name]">
+            <div class="card garden-card">
+              <div class="card-body">
+                <div>
+                  <h5 class="mb-1">{{ garden.name }}</h5>
+                  <div class="text-muted small">
+                    @if (garden.location) { {{ garden.location }} }
+                    @if (garden.height_cm && garden.width_cm) { — {{ garden.height_cm }}cm × {{ garden.width_cm }}cm }
+                  </div>
+                </div>
+                @if (garden.parts && garden.parts.length > 0) {
+                  <div class="mt-2 small text-muted">Parts: {{ garden.parts.length }}</div>
+                }
+              </div>
             </div>
-            <div class="card-body">
-              @if (garden.beds && garden.beds.length > 0) {
-                <p class="mb-2"><strong>Beds:</strong> {{ garden.beds.length }}</p>
-                <ul class="list-group list-group-flush">
-                  @for (bed of garden.beds; track bed.name) {
-                    <li class="list-group-item px-0 py-1">
-                      <small>
-                        <strong>{{ bed.name }}</strong>
-                        @if (bed.size_m2) { ({{ bed.size_m2 }} m²) }
-                      </small>
-                    </li>
-                  }
-                </ul>
-              } @else {
-                <p class="text-muted mb-0">No beds</p>
-              }
-            </div>
-          </div>
+          </a>
         </div>
       }
     </div>
   }
-  @if (!loading() && !error && gardens.length === 0) {
+  @if (!loading() && !error() && gardens().length === 0) {
     <p>No gardens found.</p>
   }
 </div>

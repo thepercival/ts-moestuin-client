@@ -5,21 +5,46 @@
     <div>Loading…</div>
   }
 
-  @if (error) {
-    <div class="error">{{ error }}</div>
+  @if (error()) {
+    <div class="error">{{ error() }}</div>
   }
 
-  @if (!loading() && !error && beds.length > 0) {
+  @if (!loading() && !error() && beds().length > 0) {
     <ul>
-      @for (bed of beds; track bed.name) {
+      @for (bed of beds(); track bed.name) {
         <li>
           <strong>{{ bed.name }}</strong>
           <div class="meta">
-            size: {{ bed.size_m2 || '—' }} m²
-            @if (bed.soil_type) { — soil: {{ bed.soil_type }} }
-            @if (bed.location) { — location: {{ bed.location }} }
+            @if (bed.height_cm || bed.width_cm) {
+              size: 
+              @if (bed.height_cm) { {{ bed.height_cm }}cm }
+              @if (bed.height_cm && bed.width_cm) { × }
+              @if (bed.width_cm) { {{ bed.width_cm }}cm }
+            }
+            @if (bed.soil) { 
+              — soil: 
+              @if (bed.soil.texture) { {{ bed.soil.texture }} }
+              @if (bed.soil.drainage) { ({{ bed.soil.drainage }}) }
+            }
+            @if (bed.mulched !== undefined) { — mulched: {{ bed.mulched ? 'yes' : 'no' }} }
             @if (bed.growings && bed.growings.length > 0) {
-              <span class="badge bg-success ms-2">{{ bed.growings.length }} plant(s)</span>
+              <span class="badge bg-success ms-2">{{ bed.growings.length }} growing(s)</span>
+              <ul class="small ps-3 mb-1">
+                @for (growing of bed.growings; track growing.plant_id) {
+                  <li>
+                    <strong>{{ growing.plant_id || 'unknown' }}</strong>
+                    @if (growing.planted_on) { <span class="text-muted">— planted: {{ growing.planted_on }}</span> }
+                    @if (growing.height_cm || growing.width_cm) {
+                      <span class="text-muted">
+                        — size: 
+                        @if (growing.height_cm) { {{ growing.height_cm }}cm }
+                        @if (growing.height_cm && growing.width_cm) { × }
+                        @if (growing.width_cm) { {{ growing.width_cm }}cm }
+                      </span>
+                    }
+                  </li>
+                }
+              </ul>
             }
           </div>
         </li>

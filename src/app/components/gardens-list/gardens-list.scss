@@ -1,3 +1,11 @@
 .view { padding: 1rem }
 .error { color: darkred }
 pre { background:#f6f6f6; padding:1rem; border-radius:6px }
+.garden-card-link {
+	display: block;
+	color: inherit;
+	text-decoration: none;
+	cursor: pointer;
+}
+.garden-card { transition: transform 120ms ease, box-shadow 120ms ease; }
+.garden-card:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0,0,0,0.08); }

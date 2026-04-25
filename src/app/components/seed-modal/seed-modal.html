@@ -1,0 +1,56 @@
+<div class="modal-header">
+  <h5 class="modal-title">Zaad toevoegen: {{ plant?.common_name }}</h5>
+  <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss()"></button>
+</div>
+<form class="modal-body" (ngSubmit)="saveSeed()">
+  @if (error()) {
+    <div class="alert alert-danger mb-3">{{ error() }}</div>
+  }
+
+  <div class="row g-2">
+    <div class="col-12">
+      <label class="form-label">Geldig tm jaar</label>
+      <input type="number" class="form-control" name="seed_valid_until_year" [(ngModel)]="seedForm.valid_until_year" required />
+    </div>
+
+    <div class="col-12">
+      <label class="form-label">Variant naam</label>
+      <input type="text" class="form-control" name="seed_variant_name" [(ngModel)]="seedForm.variant_name" />
+    </div>
+
+    <div class="col-12">
+      <label class="form-label">Aangekocht op</label>
+      <input type="date" class="form-control" name="seed_bought_on" [(ngModel)]="seedForm.bought_on" />
+    </div>
+
+    <div class="col-12">
+      <label class="form-label">Webshop naam</label>
+      <select class="form-select" name="seed_webshop_name" [(ngModel)]="seedForm.webshop_name">
+        <option value="">Geen</option>
+        @for (shop of webshopOptions; track shop) {
+          <option [value]="shop">{{ shop }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="col-12">
+      <label class="form-label">Product URL</label>
+      <input type="url" class="form-control" name="seed_product_url" [(ngModel)]="seedForm.product_url" />
+    </div>
+
+    <div class="col-md-6">
+      <label class="form-label">Zaaidiepte (cm)</label>
+      <input type="number" class="form-control" name="seed_sowing_depth" [(ngModel)]="seedForm.sowing_depth_cm" required />
+    </div>
+
+    <div class="col-md-6">
+      <label class="form-label">Plantafstand (cm)</label>
+      <input type="number" class="form-control" name="seed_sowing_distance" [(ngModel)]="seedForm.sowing_distance_cm" required />
+    </div>
+  </div>
+
+  <div class="modal-footer px-0 pb-0 mt-3">
+    <button type="button" class="btn btn-outline-secondary" (click)="activeModal.dismiss()">Annuleren</button>
+    <button type="submit" class="btn btn-primary">Opslaan</button>
+  </div>
+</form>

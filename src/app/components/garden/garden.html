@@ -1,0 +1,62 @@
+<div class="card">
+  <div class="card-header" (click)="toggleCollapse()" style="cursor: pointer;">
+    <div class="d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">{{ garden.name }}</h5>
+      <i class="bi" [ngClass]="isCollapsed() ? 'bi-chevron-down' : 'bi-chevron-up'"></i>
+    </div>
+  </div>
+  @if (!isCollapsed()) {
+    <div class="card-body">
+      @if (garden.location || garden.humidity || garden.temperature_range_c) {
+        <div class="row mb-3">
+          <div class="col-5">
+            @if (garden.location) {
+              <div class="mb-2"><strong>Location:</strong></div>
+            }
+            @if (garden.humidity) {
+              <div class="mb-2"><strong>Humidity:</strong></div>
+            }
+            @if (garden.temperature_range_c) {
+              <div class="mb-2"><strong>Tmp. Range:</strong></div>
+            }
+          </div>
+          
+          <div class="col-7">
+            @if (garden.location) {
+              <div class="mb-2">{{ garden.location }}</div>
+            }
+            @if (garden.humidity) {
+              <div class="mb-2">
+                @if (garden.humidity.min_pct !== undefined && garden.humidity.max_pct !== undefined) {
+                  {{ garden.humidity.min_pct }}% - {{ garden.humidity.max_pct }}%
+                } @else if (garden.humidity.min_pct !== undefined) {
+                  Min: {{ garden.humidity.min_pct }}%
+                } @else if (garden.humidity.max_pct !== undefined) {
+                  Max: {{ garden.humidity.max_pct }}%
+                }
+              </div>
+            }
+            @if (garden.temperature_range_c) {
+              <div class="mb-2">
+                @if (garden.temperature_range_c.min !== undefined && garden.temperature_range_c.max !== undefined) {
+                  {{ garden.temperature_range_c.min }}°C - {{ garden.temperature_range_c.max }}°C
+                } @else if (garden.temperature_range_c.min !== undefined) {
+                  Min: {{ garden.temperature_range_c.min }}°C
+                } @else if (garden.temperature_range_c.max !== undefined) {
+                  Max: {{ garden.temperature_range_c.max }}°C
+                }
+              </div>
+            }
+          </div>
+        </div>
+      }
+      @if (bedParts(garden.parts).length > 0) {
+        @for (bed of bedParts(garden.parts); track bed.name) {
+          <app-bed [bed]="bed"></app-bed>
+        }
+      } @else {
+        <p class="text-muted mb-0">No beds</p>
+      }
+    </div>
+  }
+</div>
